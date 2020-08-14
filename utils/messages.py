@@ -17,3 +17,16 @@ BANDS_BTN = "Validate your band selection"
 NO_BANDS = "You didn't select bands for forest and/or non-forest description"
 BANDS_VALID = "Your band selection have been validated"
 BANDS_OVERRIDE = "You selected at least a band twice. Please verify your inputs"
+BIN_MAP_READY = "The bin map was already ready you can launch the mspa process"
+END_BIN_MAP = "The bin map have been successfully created"
+
+##########################################
+##             mspa process             ##
+##########################################
+MSPA_NO_RESULTS = 'No results to display yet'
+MSPA_MESSAGE = "Launch MSPA analysis on your data"
+MSPA_BTN = 'Run mspa analysis'
+RUN_MSPA = 'Run mspa with "{}" inputs'
+MSPA_MAP_READY = "the MSPA map was already ready"
+NO_MAP = "no bin map can be used in this configuration. Please rerun the band selection process"
+NO_INPUT = "please check that all the mspa process input have be initialized"

@@ -1,6 +1,6 @@
 import os
 import psutil
-from sepal_ui.scripts import utils as su
+from sepal_ui.scripts import utils as su 
 from utils import messages as ms
 import rasterio as rio
 import numpy as np
@@ -11,6 +11,11 @@ import gdal
 import osr
 import shutil
 from distutils import dir_util
+import io
+import sys
+from scripts import mspa
+from sepal_ui import widgetFactory as wf
+import ipyvuetify as v
 
 def validate_file(file, output):
     
@@ -25,7 +30,7 @@ def validate_file(file, output):
         return None
     
     #check the file size 
-    if  os.path.getsize(file) > psutil.virtual_memory()[1]/2: #available memory
+    if  os.path.getsize(file) > psutil.virtual_memory()[1]: #available memory
         su.displayIO(output, ms.TOO_BIG, 'error')
         return None
     
@@ -65,9 +70,8 @@ def set_bin_map(raster, values, forest, nforest, output):
         
         #add "+" for every val but the last one
         if index < (len(values)-1): #start at O
-            calc += '+'
-            
-    print(calc)
+            calc += '+'   
+    
             
     #create the command 
     command = [
@@ -78,22 +82,24 @@ def set_bin_map(raster, values, forest, nforest, output):
         '--calc="{}"'.format(calc),
         '--type="Byte"'
     ]
-    
-    print(command)
-    
     #launch the process
-    kwargs = {
-            'args' : command,
-            'stdout' : subprocess.PIPE,
-            'stderr' : subprocess.PIPE,
-            'universal_newlines' : True
-        }
+    os.system(' '.join(command))
     
-    with subprocess.Popen(**kwargs) as p:
-        for line in p.stdout:
-            su.displayIO(output, line)
+    # TODO cannot use subprocess with gdal_calc.py for absolutely no reason 
+    #kwargs = {
+    #    'cwd' : os.path.expanduser('~'),
+    #    'args' : command,
+    #    'stdout' : subprocess.PIPE,
+    #    'stderr' : subprocess.PIPE,
+    #    'universal_newlines' : True,
+    #    'shell' : True
+    #}
+    #
+    #with subprocess.Popen(**kwargs) as p:
+    #    for line in p.stdout:
+    #        su.displayIO(output, line)
             
-    su.displayIO(output, ms.END_BIN_MAP)
+    su.displayIO(output, ms.END_BIN_MAP, 'success')
     
     return bin_map
 
@@ -156,34 +162,35 @@ def mspa_analysis(bin_map, params, output):
         with subprocess.Popen(**kwargs) as p:
             for line in p.stdout:
                 su.displayIO(output, line)
+               
+        #file created by mspa
+        mspa_tmp_map = mspa_output_dir + 'input_' + params_name + '.tif'
+        
+        #check if the code created a file 
+        if not os.path.isfile(mspa_tmp_map):
+            su.displayIO(output, ms.ERROR_MSPA, 'error')
+            return None
     
         #copy result tif file in gfc 
-        mspa_tmp_map = mspa_output_dir + 'input_' + params_name + '.tif'
-        mspa_map = pm.getResultDir() + filename + '_{}_mspa_map_tmp.tif'.format(params_name)
+        
+        mspa_map = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
     
         shutil.copyfile(mspa_tmp_map, mspa_map)
-    
-        #add projection
-        options = gdal.TranslateOptions(outputSRS=proj)
-        gdal.Translate(mspa_map_proj, mspa_map, options=options)
     
         #copy result txt file in gfc
         mspa_tmp_stat = mspa_output_dir + 'input_{}_stat.txt'.format(params_name)
         shutil.copyfile(mspa_tmp_stat, mspa_stat)
         
-        su.displayIO(output, 'Mspa map complete', alert_type='success') 
+        su.displayIO(output, 'Mspa map complete', 'success') 
         
         ###################### end of mspa process
     
     #flush tmp directory
     shutil.rmtree(pm.getTmpMspaDir())
     
-    #delete tmp map
-    os.remove(mspa_tmp_map)
-    
     #create the output 
-    table = mmr.getTable(mspa_stat)
-    fragmentation_map = mmr.fragmentationMap(mspa_map_proj, output)
+    table = mspa.getTable(mspa_stat)
+    fragmentation_map = mspa.fragmentationMap(mspa_map_proj, output)
     paths = [mspa_stat, mspa_map_proj]
     
     ######################################

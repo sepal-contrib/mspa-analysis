@@ -30,3 +30,4 @@ RUN_MSPA = 'Run mspa with "{}" inputs'
 MSPA_MAP_READY = "the MSPA map was already ready"
 NO_MAP = "no bin map can be used in this configuration. Please rerun the band selection process"
 NO_INPUT = "please check that all the mspa process input have be initialized"
+ERROR_MSPA = "An error occured during the execution of the MSPA process. Try running a bigger AWS instance and relaunch the app"

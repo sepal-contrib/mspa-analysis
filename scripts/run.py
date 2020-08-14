@@ -13,6 +13,9 @@ import shutil
 from distutils import dir_util
 import io
 import sys
+from scripts import mspa
+from sepal_ui import widgetFactory as wf
+import ipyvuetify as v
 
 def validate_file(file, output):
     
@@ -96,7 +99,7 @@ def set_bin_map(raster, values, forest, nforest, output):
     #    for line in p.stdout:
     #        su.displayIO(output, line)
             
-    su.displayIO(output, ms.END_BIN_MAP)
+    su.displayIO(output, ms.END_BIN_MAP, 'success')
     
     return bin_map
 
@@ -159,12 +162,17 @@ def mspa_analysis(bin_map, params, output):
         with subprocess.Popen(**kwargs) as p:
             for line in p.stdout:
                 su.displayIO(output, line)
-            if p.returncode:
-                su.displayIO(output, line, 'error')
-                return None
+               
+        #file created by mspa
+        mspa_tmp_map = mspa_output_dir + 'input_' + params_name + '.tif'
+        
+        #check if the code created a file 
+        if not os.path.isfile(mspa_tmp_map):
+            su.displayIO(output, ms.ERROR_MSPA, 'error')
+            return None
     
         #copy result tif file in gfc 
-        mspa_tmp_map = mspa_output_dir + 'input_' + params_name + '.tif'
+        
         mspa_map = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
     
         shutil.copyfile(mspa_tmp_map, mspa_map)
@@ -180,12 +188,9 @@ def mspa_analysis(bin_map, params, output):
     #flush tmp directory
     shutil.rmtree(pm.getTmpMspaDir())
     
-    #delete tmp map
-    os.remove(mspa_tmp_map)
-    
     #create the output 
-    table = mmr.getTable(mspa_stat)
-    fragmentation_map = mmr.fragmentationMap(mspa_map_proj, output)
+    table = mspa.getTable(mspa_stat)
+    fragmentation_map = mspa.fragmentationMap(mspa_map_proj, output)
     paths = [mspa_stat, mspa_map_proj]
     
     ######################################

@@ -3,21 +3,47 @@ import os
 from bqplot import *
 import ipywidgets as widgets
 import ipyvuetify as v
+import gdal
+from sepal_ui import mapping as sm
+from matplotlib.colors import ListedColormap, to_hex
 
 from utils import parameter as pm
 
-def fragmentationMap(path, output):
-    # TODO before I found how to display tif as interactive maps I use a simple ipywidget
-    output.add_live_msg('Displaying results') 
-    with open(path, 'rb') as f:
-        raw_image = f.read()
-    output.add_live_msg('Image read')
-    output.add_live_msg('Creating the widget')
-    ipyimage = widgets.Image(value=raw_image, format='tif')
+def fragmentationMap(raster, output):
+    output.add_live_msg('Displaying results')
+    
+    map_ = sm.SepalMap()
+
+    ds = gdal.Open(raster)
+    band = ds.GetRasterBand(1)
+    min_, max_ = band.ComputeRasterMinMax()
+    min_, max_ = int(min_), int(max_)
+    color_map = None
+    ct = band.GetRasterColorTable()
+
+    color_map = []
+    for index in range(min_, max_+1):
+        color = ct.GetColorEntry(index)
+    
+        #hide no-data: 
+        if list(color) == pm.mspa_colors['no-data']:
+            color_map.append([.0, .0, .0, .0])
+        else:
+            color_map.append([val/255 for val in list(color)])
+
+    color_map = ListedColormap(color_map, N=max_)
+
+    #display a raster on the map
+    map_.add_raster(raster, colormap=color_map, layer_name='framgmentation map');
+
+    #add a legend 
+    legend_keys = [index for index in pm.mspa_colors]
+    legend_colors = [to_hex([val/255 for val in pm.mspa_colors[index]]) for index in pm.mspa_colors] 
+    map_.add_legend(legend_keys=legend_keys, legend_colors=legend_colors, position='topleft')
     
     output.add_live_msg('Mspa process complete', 'success')
     
-    return ipyimage
+    return map_
 
 def getTable(stat_file):
     

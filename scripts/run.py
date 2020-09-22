@@ -1,37 +1,37 @@
 import os
 import psutil
-from sepal_ui.scripts import utils as su 
-from utils import messages as ms
-import rasterio as rio
-import numpy as np
-from pathlib import Path
-from utils import parameter as pm
-import subprocess
-import gdal
-import osr
 import shutil
+import subprocess
+from pathlib import Path
 from distutils import dir_util
-import io
-import sys
-from scripts import mspa
+
 from sepal_ui import widgetFactory as wf
 import ipyvuetify as v
+import rasterio as rio
+import numpy as np
+import gdal
+import osr
+
+from scripts import mspa
+from utils import messages as ms
+from utils import parameter as pm
+
 
 def validate_file(file, output):
     
     #check that the file exist
     if not os.path.isfile(file):
-        su.displayIO(output, ms.WRONG_FILE.format(file), 'error')
+        output.add_live_msg(ms.WRONG_FILE.format(file), 'error')
         return None
     
     #check that the file is a tif 
     if not file.lower().endswith(('.tif', '.tiff')):
-        su.displayIO(output, ms.WRONG_FILE_TYPE.format(file), 'error')
+        output.add_live_msg(ms.WRONG_FILE_TYPE.format(file), 'error')
         return None
     
     #check the file size 
     if  os.path.getsize(file) > psutil.virtual_memory()[1]: #available memory
-        su.displayIO(output, ms.TOO_BIG, 'error')
+        output.add_live_msg(ms.TOO_BIG, 'error')
         return None
     
     #readt the file 
@@ -56,7 +56,7 @@ def set_bin_map(raster, values, forest, nforest, output):
     bin_map = pm.getResultDir() + filename + '_bin_map.tif'
     
     if os.path.isfile(bin_map):
-        su.displayIO(output, ms.BIN_MAP_READY, 'success')
+        output.add_live_msg(ms.BIN_MAP_READY, 'success')
         return bin_map
     
     calc = ''
@@ -84,22 +84,8 @@ def set_bin_map(raster, values, forest, nforest, output):
     ]
     #launch the process
     os.system(' '.join(command))
-    
-    # TODO cannot use subprocess with gdal_calc.py for absolutely no reason 
-    #kwargs = {
-    #    'cwd' : os.path.expanduser('~'),
-    #    'args' : command,
-    #    'stdout' : subprocess.PIPE,
-    #    'stderr' : subprocess.PIPE,
-    #    'universal_newlines' : True,
-    #    'shell' : True
-    #}
-    #
-    #with subprocess.Popen(**kwargs) as p:
-    #    for line in p.stdout:
-    #        su.displayIO(output, line)
             
-    su.displayIO(output, ms.END_BIN_MAP, 'success')
+    output.add_live_msg(ms.END_BIN_MAP, 'success')
     
     return bin_map
 
@@ -111,7 +97,7 @@ def mspa_analysis(bin_map, params, output):
     #remove the stats parameter for naming 
     params_name = '_'.join(params[:-1])
     
-    su.displayIO(output, ms.RUN_MSPA.format(' '.join(params)))
+    output.add_live_msg(ms.RUN_MSPA.format(' '.join(params)))
     
     #check if file already exist
     mspa_map_proj = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
@@ -119,7 +105,7 @@ def mspa_analysis(bin_map, params, output):
     mspa_stat = pm.getResultDir() + filename + '_{}_mspa_stat.txt'.format(params_name)
     
     if os.path.isfile(mspa_map_proj):
-        su.displayIO(output, ms.MSPA_MAP_READY, 'success')
+        output.add_live_msg(ms.MSPA_MAP_READY, 'success')
     else:
         
         #get the init file proj system 
@@ -161,14 +147,14 @@ def mspa_analysis(bin_map, params, output):
         }
         with subprocess.Popen(**kwargs) as p:
             for line in p.stdout:
-                su.displayIO(output, line)
+                output.add_live_msg(line)
                
         #file created by mspa
         mspa_tmp_map = mspa_output_dir + 'input_' + params_name + '.tif'
         
         #check if the code created a file 
         if not os.path.isfile(mspa_tmp_map):
-            su.displayIO(output, ms.ERROR_MSPA, 'error')
+            output.add_live_msg(ms.ERROR_MSPA, 'error')
             return None
     
         #copy result tif file in gfc 
@@ -181,7 +167,7 @@ def mspa_analysis(bin_map, params, output):
         mspa_tmp_stat = mspa_output_dir + 'input_{}_stat.txt'.format(params_name)
         shutil.copyfile(mspa_tmp_stat, mspa_stat)
         
-        su.displayIO(output, 'Mspa map complete', 'success') 
+        output.add_live_msg('Mspa map complete', 'success') 
         
         ###################### end of mspa process
     

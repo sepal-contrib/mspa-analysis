@@ -1,20 +1,21 @@
-from utils import parameter as pm
 import os
+
 from bqplot import *
 import ipywidgets as widgets
-from sepal_ui.scripts import utils as su 
 import ipyvuetify as v
+
+from utils import parameter as pm
 
 def fragmentationMap(path, output):
     # TODO before I found how to display tif as interactive maps I use a simple ipywidget
-    su.displayIO(output, 'Displaying results') 
+    output.add_live_msg('Displaying results') 
     with open(path, 'rb') as f:
         raw_image = f.read()
-    su.displayIO(output, 'Image read')
-    su.displayIO(output, 'Creating the widget')
+    output.add_live_msg('Image read')
+    output.add_live_msg('Creating the widget')
     ipyimage = widgets.Image(value=raw_image, format='tif')
     
-    su.displayIO(output, 'Mspa process complete', 'success')
+    output.add_live_msg('Mspa process complete', 'success')
     
     return ipyimage
 

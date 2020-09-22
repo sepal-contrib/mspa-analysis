@@ -100,18 +100,13 @@ def mspa_analysis(bin_map, params, output):
     output.add_live_msg(ms.RUN_MSPA.format(' '.join(params)))
     
     #check if file already exist
-    mspa_map_proj = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
+    mspa_map = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
     
     mspa_stat = pm.getResultDir() + filename + '_{}_mspa_stat.txt'.format(params_name)
     
-    if os.path.isfile(mspa_map_proj):
+    if os.path.isfile(mspa_map):
         output.add_live_msg(ms.MSPA_MAP_READY, 'success')
     else:
-        
-        #get the init file proj system 
-        src = gdal.Open(bin_map)
-        proj = osr.SpatialReference(wkt=src.GetProjection())
-        src = None
     
         #copy the script folder in tmp 
         dir_util.copy_tree(pm.getMspaDir(), pm.getTmpMspaDir())
@@ -123,9 +118,9 @@ def mspa_analysis(bin_map, params, output):
         mspa_output_dir = pm.create_folder(pm.getTmpMspaDir() + 'output') + '/'
         mspa_tmp_dir = pm.create_folder(pm.getTmpMspaDir() + 'tmp') + '/' 
     
-        #copy the bin_map to input_dir
+        #copy the bin_map to input_dir and project it in a conform proj (ESRI:54009)
         bin_tmp_map = mspa_input_dir + 'input.tif'
-        shutil.copyfile(bin_map, bin_tmp_map)
+        gdal.Warp(bin_tmp_map, bin_map, creationOptions=['COMPRESS=LZW'], dstSRS='ESRI:54009')
     
         #create the parameter file     
         with open(mspa_input_dir + 'mspa-parameters.txt',"w+") as file:
@@ -157,11 +152,9 @@ def mspa_analysis(bin_map, params, output):
             output.add_live_msg(ms.ERROR_MSPA, 'error')
             return None
     
-        #copy result tif file in gfc 
-        
-        mspa_map = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
-    
-        shutil.copyfile(mspa_tmp_map, mspa_map)
+        #copy result tif file in gfc         
+        #compress map (the dst_nodata has been added to avoid lateral bands when projecting as 0 is not the mspa no-data value)
+        gdal.Warp(mspa_map, mspa_tmp_map, creationOptions=['COMPRESS=LZW'], dstSRS='EPSG:4326', dstNodata=129)
     
         #copy result txt file in gfc
         mspa_tmp_stat = mspa_output_dir + 'input_{}_stat.txt'.format(params_name)
@@ -176,8 +169,8 @@ def mspa_analysis(bin_map, params, output):
     
     #create the output 
     table = mspa.getTable(mspa_stat)
-    fragmentation_map = mspa.fragmentationMap(mspa_map_proj, output)
-    paths = [mspa_stat, mspa_map_proj]
+    fragmentation_map = mspa.fragmentationMap(mspa_map, output)
+    paths = [mspa_stat, mspa_map]
     
     ######################################
     #####     create the layout        ###

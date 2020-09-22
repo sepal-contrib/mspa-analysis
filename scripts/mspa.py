@@ -45,11 +45,17 @@ def fragmentationMap(raster, output):
     map_.add_legend(legend_keys=legend_keys, legend_colors=legend_colors, position='topleft')
     
     #extract the corners coordinates
-    ulx, xres, xskew, uly, yskew, yres  = ds.GetGeoTransform()
-    lrx = ulx + (ds.RasterXSize * xres)
-    lry = uly + (ds.RasterYSize * yres)
+    min_lon, xres, xskew, max_lat, yskew, yres  = ds.GetGeoTransform()
+    max_lon = min_lon + (ds.RasterXSize * xres)
+    min_lat = max_lat + (ds.RasterYSize * yres)
     
-    tl, bl, tr, br = (ulx, uly), (ulx, lry), (lrx, uly), (lrx, lry)
+    map_.set_center((max_lon+min_lon)/2,(max_lat + min_lat)/2)
+    
+    tl = (max_lat, min_lon)
+    bl = (min_lat, min_lon)
+    tr = (max_lat, max_lon)
+    br = (min_lat, max_lon)
+    
     map_.zoom_bounds(bounds=[tl, bl, tr, br])
     
     output.add_live_msg('Mspa process complete', 'success')

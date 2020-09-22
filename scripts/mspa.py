@@ -14,7 +14,10 @@ def fragmentationMap(raster, output):
     
     map_ = sm.SepalMap()
 
+    #read the raster
     ds = gdal.Open(raster)
+    
+    #extract the color palette
     band = ds.GetRasterBand(1)
     min_, max_ = band.ComputeRasterMinMax()
     min_, max_ = int(min_), int(max_)
@@ -40,6 +43,14 @@ def fragmentationMap(raster, output):
     legend_keys = [index for index in pm.mspa_colors]
     legend_colors = [to_hex([val/255 for val in pm.mspa_colors[index]]) for index in pm.mspa_colors] 
     map_.add_legend(legend_keys=legend_keys, legend_colors=legend_colors, position='topleft')
+    
+    #extract the corners coordinates
+    ulx, xres, xskew, uly, yskew, yres  = ds.GetGeoTransform()
+    lrx = ulx + (ds.RasterXSize * xres)
+    lry = uly + (ds.RasterYSize * yres)
+    
+    tl, bl, tr, br = (ulx, uly), (ulx, lry), (lrx, uly), (lrx, lry)
+    map_.zoom_bounds(bounds=[tl, bl, tr, br])
     
     output.add_live_msg('Mspa process complete', 'success')
     

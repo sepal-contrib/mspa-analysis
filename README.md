@@ -1,5 +1,5 @@
 # MSPA analysis
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ## About 
 
 Module to perform mspa analysis in the sepal plateform. The user will select a file of his choice and create it's own binary map. This binary map will be used as input file of the MSPA tool. The parameters can be tune by the user to fit it's requirements.  

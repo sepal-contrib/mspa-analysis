@@ -1,9 +1,7 @@
 Module to perform mspa analysis in the sepal plateform. The user will select a file of his choice and create it's own binary map. This binary map will be used as input file of the MSPA tool. The parameters can be tune by the user to fit it's requirements.  
 Note that all the output files are in EPSG:4326.
 
-![full app](./doc/img/full_app.png)
-
-for more information about usage please read the [documentation](./doc/doc.md)
+for more information about usage please read the [documentation](https://github.com/12rambau/mspa-analysis/blob/master/doc/doc.md)
 
 ### Background info on MSPA
 MSPA (Morphological Spatial Pattern Analysis) is a customized sequence of mathematical morphological operators targeted at the description of the geometry and connectivity of the image components. Based on geometric concepts only, this methodology can be applied at any scale and to any type of digital images in any application field.

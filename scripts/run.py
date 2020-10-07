@@ -101,7 +101,7 @@ def mspa_analysis(bin_map, params, output):
     
     #check if file already exist
     mspa_map = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
-    
+    mspa_legend = pm.getResultDir() + filename + '_{}_mspa_legend.pdf'.format(params_name)
     mspa_stat = pm.getResultDir() + filename + '_{}_mspa_stat.txt'.format(params_name)
     
     if os.path.isfile(mspa_map):
@@ -170,15 +170,16 @@ def mspa_analysis(bin_map, params, output):
     #create the output 
     table = mspa.getTable(mspa_stat)
     fragmentation_map = mspa.fragmentationMap(mspa_map, output)
-    paths = [mspa_stat, mspa_map]
+    mspa.exportLegend(mspa_legend)
     
     ######################################
     #####     create the layout        ###
     ######################################
     
     #create the links
-    gfc_download_txt = wf.DownloadBtn('MSPA stats in .txt', path=paths[0])
-    gfc_download_tif = wf.DownloadBtn('MSPA raster in .tif', path=paths[1])
+    gfc_download_txt = wf.DownloadBtn('MSPA stats in .txt', path=mspa_stat)
+    gfc_download_tif = wf.DownloadBtn('MSPA raster in .tif', path=mspa_map)
+    gfc_download_pdf = wf.DownloadBtn('MSPA legend in .pdf', path=mspa_legend)
     
     #create the partial layout 
     partial_layout = v.Layout(
@@ -196,6 +197,7 @@ def mspa_analysis(bin_map, params, output):
         v.Layout(Row=True, children=[
             gfc_download_txt,
             gfc_download_tif,
+            gfc_download_pdf
         ]),
         partial_layout
     ]

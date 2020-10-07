@@ -7,7 +7,10 @@ NO_FILE = "no file has been selected"
 WRONG_FILE = "The file {} does not exist"
 WRONG_FILE_TYPE = "The file {} is not a geotif format"
 TOO_BIG = "The file is to big, use a bigger AWS instance and relaunch the app"
-
+FILE_TXT = """
+The file input need to be a `.tif` or a `.tiff` file. It will be the only type file available in the file selector.  
+If your raster has multiple bands, only the **first one** will be used in this module to describe the forest and the non-forest areas.
+"""
 
 ###########################################
 ###         bands selection             ###

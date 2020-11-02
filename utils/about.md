@@ -1,5 +1,5 @@
-Module to perform mspa analysis in the sepal plateform. The user will select a file of his choice and create it's own binary map. This binary map will be used as input file of the MSPA tool. The parameters can be tune by the user to fit it's requirements.  
-Note that all the output files are in EPSG:4326.
+Module to perform MSPA analysis in the Sepal platform. The user will select a file of his choice and create its own binary map. This binary map will be used as input file of the MSPA tool. The parameters can be tuned by the user to fit its requirements.  
+Note that all the output files are in EPSG:4326.  
 
 for more information about usage please read the [documentation](https://github.com/12rambau/mspa-analysis/blob/master/doc/doc.md)
 

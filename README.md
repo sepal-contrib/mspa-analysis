@@ -2,8 +2,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ## About 
 
-Module to perform mspa analysis in the sepal plateform. The user will select a file of his choice and create it's own binary map. This binary map will be used as input file of the MSPA tool. The parameters can be tune by the user to fit it's requirements.  
-Note that all the output files are in EPSG:4326.
+Module to perform MSPA analysis in the Sepal platform. The user will select a file of his choice and create its own binary map. This binary map will be used as input file of the MSPA tool. The parameters can be tuned by the user to fit its requirements.  
+Note that all the output files are in EPSG:4326.  
 
 ![full app](./doc/img/full_app.png)
 
@@ -21,12 +21,12 @@ For more information please refer to:
 ![image mspa](https://forest.jrc.ec.europa.eu/media/filer_public/63/6e/636e3c07-ee31-4365-9a51-07071debeeea/mspalegend.gif)
 
 ## contribute
-to install the project on your SEPAL account 
+to install the project on your Sepal account 
 ```
 $ git clone https://github.com/12rambau/mspa-analysis.git
 ```
 
-please retreive the develop branch where all our development live
+please retrieve the develop branch where all our development live
 ```
 $ git checkout --track origin/develop
 ```

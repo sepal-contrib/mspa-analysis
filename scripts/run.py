@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 from distutils import dir_util
 
-from sepal_ui import widgetFactory as wf
 import ipyvuetify as v
+from sepal_ui import sepalwidgets as sw
 import rasterio as rio
 import numpy as np
 import gdal
@@ -177,9 +177,9 @@ def mspa_analysis(bin_map, params, output):
     ######################################
     
     #create the links
-    gfc_download_txt = wf.DownloadBtn('MSPA stats in .txt', path=mspa_stat)
-    gfc_download_tif = wf.DownloadBtn('MSPA raster in .tif', path=mspa_map)
-    gfc_download_pdf = wf.DownloadBtn('MSPA legend in .pdf', path=mspa_legend)
+    gfc_download_txt = sw.DownloadBtn('MSPA stats in .txt', path=mspa_stat)
+    gfc_download_tif = sw.DownloadBtn('MSPA raster in .tif', path=mspa_map)
+    gfc_download_pdf = sw.DownloadBtn('MSPA legend in .pdf', path=mspa_legend)
     
     #create the partial layout 
     partial_layout = v.Layout(

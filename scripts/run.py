@@ -1,32 +1,37 @@
 import os
 import psutil
-from sepal_ui.scripts import utils as su
-from utils import messages as ms
+import shutil
+import subprocess
+from pathlib import Path
+from distutils import dir_util
+
+import ipyvuetify as v
+from sepal_ui import sepalwidgets as sw
 import rasterio as rio
 import numpy as np
-from pathlib import Path
-from utils import parameter as pm
-import subprocess
 import gdal
 import osr
-import shutil
-from distutils import dir_util
+
+from scripts import mspa
+from utils import messages as ms
+from utils import parameter as pm
+
 
 def validate_file(file, output):
     
     #check that the file exist
     if not os.path.isfile(file):
-        su.displayIO(output, ms.WRONG_FILE.format(file), 'error')
+        output.add_live_msg(ms.WRONG_FILE.format(file), 'error')
         return None
     
     #check that the file is a tif 
     if not file.lower().endswith(('.tif', '.tiff')):
-        su.displayIO(output, ms.WRONG_FILE_TYPE.format(file), 'error')
+        output.add_live_msg(ms.WRONG_FILE_TYPE.format(file), 'error')
         return None
     
     #check the file size 
-    if  os.path.getsize(file) > psutil.virtual_memory()[1]/2: #available memory
-        su.displayIO(output, ms.TOO_BIG, 'error')
+    if  os.path.getsize(file) > psutil.virtual_memory()[1]: #available memory
+        output.add_live_msg(ms.TOO_BIG, 'error')
         return None
     
     #readt the file 
@@ -51,7 +56,7 @@ def set_bin_map(raster, values, forest, nforest, output):
     bin_map = pm.getResultDir() + filename + '_bin_map.tif'
     
     if os.path.isfile(bin_map):
-        su.displayIO(output, ms.BIN_MAP_READY, 'success')
+        output.add_live_msg(ms.BIN_MAP_READY, 'success')
         return bin_map
     
     calc = ''
@@ -65,9 +70,8 @@ def set_bin_map(raster, values, forest, nforest, output):
         
         #add "+" for every val but the last one
         if index < (len(values)-1): #start at O
-            calc += '+'
-            
-    print(calc)
+            calc += '+'   
+    
             
     #create the command 
     command = [
@@ -78,22 +82,10 @@ def set_bin_map(raster, values, forest, nforest, output):
         '--calc="{}"'.format(calc),
         '--type="Byte"'
     ]
-    
-    print(command)
-    
     #launch the process
-    kwargs = {
-            'args' : command,
-            'stdout' : subprocess.PIPE,
-            'stderr' : subprocess.PIPE,
-            'universal_newlines' : True
-        }
-    
-    with subprocess.Popen(**kwargs) as p:
-        for line in p.stdout:
-            su.displayIO(output, line)
+    os.system(' '.join(command))
             
-    su.displayIO(output, ms.END_BIN_MAP)
+    output.add_live_msg(ms.END_BIN_MAP, 'success')
     
     return bin_map
 
@@ -105,21 +97,16 @@ def mspa_analysis(bin_map, params, output):
     #remove the stats parameter for naming 
     params_name = '_'.join(params[:-1])
     
-    su.displayIO(output, ms.RUN_MSPA.format(' '.join(params)))
+    output.add_live_msg(ms.RUN_MSPA.format(' '.join(params)))
     
     #check if file already exist
-    mspa_map_proj = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
-    
+    mspa_map = pm.getResultDir() + filename + '_{}_mspa_map.tif'.format(params_name)
+    mspa_legend = pm.getResultDir() + filename + '_{}_mspa_legend.pdf'.format(params_name)
     mspa_stat = pm.getResultDir() + filename + '_{}_mspa_stat.txt'.format(params_name)
     
-    if os.path.isfile(mspa_map_proj):
-        su.displayIO(output, ms.MSPA_MAP_READY, 'success')
+    if os.path.isfile(mspa_map):
+        output.add_live_msg(ms.MSPA_MAP_READY, 'success')
     else:
-        
-        #get the init file proj system 
-        src = gdal.Open(bin_map)
-        proj = osr.SpatialReference(wkt=src.GetProjection())
-        src = None
     
         #copy the script folder in tmp 
         dir_util.copy_tree(pm.getMspaDir(), pm.getTmpMspaDir())
@@ -131,9 +118,9 @@ def mspa_analysis(bin_map, params, output):
         mspa_output_dir = pm.create_folder(pm.getTmpMspaDir() + 'output') + '/'
         mspa_tmp_dir = pm.create_folder(pm.getTmpMspaDir() + 'tmp') + '/' 
     
-        #copy the bin_map to input_dir
+        #copy the bin_map to input_dir and project it in a conform proj (ESRI:54009)
         bin_tmp_map = mspa_input_dir + 'input.tif'
-        shutil.copyfile(bin_map, bin_tmp_map)
+        gdal.Warp(bin_tmp_map, bin_map, creationOptions=['COMPRESS=LZW'], dstSRS='ESRI:54009')
     
         #create the parameter file     
         with open(mspa_input_dir + 'mspa-parameters.txt',"w+") as file:
@@ -155,44 +142,44 @@ def mspa_analysis(bin_map, params, output):
         }
         with subprocess.Popen(**kwargs) as p:
             for line in p.stdout:
-                su.displayIO(output, line)
-    
-        #copy result tif file in gfc 
+                output.add_live_msg(line)
+               
+        #file created by mspa
         mspa_tmp_map = mspa_output_dir + 'input_' + params_name + '.tif'
-        mspa_map = pm.getResultDir() + filename + '_{}_mspa_map_tmp.tif'.format(params_name)
+        
+        #check if the code created a file 
+        if not os.path.isfile(mspa_tmp_map):
+            output.add_live_msg(ms.ERROR_MSPA, 'error')
+            return None
     
-        shutil.copyfile(mspa_tmp_map, mspa_map)
-    
-        #add projection
-        options = gdal.TranslateOptions(outputSRS=proj)
-        gdal.Translate(mspa_map_proj, mspa_map, options=options)
+        #copy result tif file in gfc         
+        #compress map (the dst_nodata has been added to avoid lateral bands when projecting as 0 is not the mspa no-data value)
+        gdal.Warp(mspa_map, mspa_tmp_map, creationOptions=['COMPRESS=LZW'], dstSRS='EPSG:4326', dstNodata=129)
     
         #copy result txt file in gfc
         mspa_tmp_stat = mspa_output_dir + 'input_{}_stat.txt'.format(params_name)
         shutil.copyfile(mspa_tmp_stat, mspa_stat)
         
-        su.displayIO(output, 'Mspa map complete', alert_type='success') 
+        output.add_live_msg('Mspa map complete', 'success') 
         
         ###################### end of mspa process
     
     #flush tmp directory
     shutil.rmtree(pm.getTmpMspaDir())
     
-    #delete tmp map
-    os.remove(mspa_tmp_map)
-    
     #create the output 
-    table = mmr.getTable(mspa_stat)
-    fragmentation_map = mmr.fragmentationMap(mspa_map_proj, output)
-    paths = [mspa_stat, mspa_map_proj]
+    table = mspa.getTable(mspa_stat)
+    fragmentation_map = mspa.fragmentationMap(mspa_map, output)
+    mspa.exportLegend(mspa_legend)
     
     ######################################
     #####     create the layout        ###
     ######################################
     
     #create the links
-    gfc_download_txt = wf.DownloadBtn('MSPA stats in .txt', path=paths[0])
-    gfc_download_tif = wf.DownloadBtn('MSPA raster in .tif', path=paths[1])
+    gfc_download_txt = sw.DownloadBtn('MSPA stats in .txt', path=mspa_stat)
+    gfc_download_tif = sw.DownloadBtn('MSPA raster in .tif', path=mspa_map)
+    gfc_download_pdf = sw.DownloadBtn('MSPA legend in .pdf', path=mspa_legend)
     
     #create the partial layout 
     partial_layout = v.Layout(
@@ -210,6 +197,7 @@ def mspa_analysis(bin_map, params, output):
         v.Layout(Row=True, children=[
             gfc_download_txt,
             gfc_download_tif,
+            gfc_download_pdf
         ]),
         partial_layout
     ]

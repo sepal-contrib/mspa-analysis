@@ -152,7 +152,9 @@ def mspa_analysis(bin_map, params, output):
         #reproject(mspa_tmp_map, mspa_map, 'EPSG:4326')
         with rio.open(mspa_tmp_map) as src:
             kwargs = src.meta.copy()
+            kwargs.update(nodata=129)
             kwargs.update(compress='lzw')
+            
             with rio.open(mspa_map, 'w', **kwargs) as dst:
                 dst.write(src.read())
                 dst.write_colormap(1, src.colormap(1))

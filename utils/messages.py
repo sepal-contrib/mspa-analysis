@@ -15,7 +15,7 @@ If your raster has multiple bands, only the **first one** will be used in this m
 ###########################################
 ###         bands selection             ###
 ###########################################
-BANDS_INTRO = "Select the value that will be tagged as forest (2) and non-forest (1). The remaining values will be tagged as no-data (0). Be carreful not to select a value twice."
+BANDS_INTRO = "Select the classes that will be tagged as foreground (2) and background (1) in the binary map. The remaining classes will be tagged as no-data (0). Be carreful not to select a class twice."
 BANDS_BTN = "Validate your values selection"
 NO_BANDS = "You didn't select values for forest and/or non-forest description"
 BANDS_VALID = "Your values selection have been validated"

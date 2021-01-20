@@ -3,10 +3,10 @@ import os
 from bqplot import *
 import ipywidgets as widgets
 import ipyvuetify as v
-import gdal
 from sepal_ui import mapping as sm
 from matplotlib.colors import ListedColormap, to_hex, to_rgba
 from matplotlib import pyplot as plt
+import rasterio as rio
 
 from utils import parameter as pm
 
@@ -14,26 +14,31 @@ def fragmentationMap(raster, output):
     output.add_live_msg('Displaying results')
     
     map_ = sm.SepalMap()
-
-    #read the raster
-    ds = gdal.Open(raster)
     
-    #extract the color palette
-    band = ds.GetRasterBand(1)
-    min_, max_ = band.ComputeRasterMinMax()
-    min_, max_ = int(min_), int(max_)
-    color_map = None
-    ct = band.GetRasterColorTable()
+    # read the raster 
+    with rio.open(raster) as src:
+        
+        data = src.read()
+        
+        min_ = int(np.amin(data[0]))
+        max_ = int(np.amax(data[0]))
+        ct = src.colormap(1)
+        
+        #extract the corners coordinates
+        min_lon =  src.bounds.left
+        max_lat = src.bounds.top
+        max_lon = src.bounds.right
+        min_lat = src.bounds.bottom
 
+    # extract a color map  
     color_map = []
-    for index in range(min_, max_+1):
-        color = ct.GetColorEntry(index)
+    for i in range(min_, max_+1):
     
         #hide no-data: 
-        if list(color) == pm.mspa_colors['no-data']:
+        if list(ct[i]) == pm.mspa_colors['no-data']:
             color_map.append([.0, .0, .0, .0])
         else:
-            color_map.append([val/255 for val in list(color)])
+            color_map.append([val/255 for val in list(ct[i])])
 
     color_map = ListedColormap(color_map, N=max_)
 
@@ -44,11 +49,6 @@ def fragmentationMap(raster, output):
     legend_keys = [index for index in pm.mspa_colors]
     legend_colors = [to_hex([val/255 for val in pm.mspa_colors[index]]) for index in pm.mspa_colors] 
     map_.add_legend(legend_keys=legend_keys, legend_colors=legend_colors, position='topleft')
-    
-    #extract the corners coordinates
-    min_lon, xres, xskew, max_lat, yskew, yres  = ds.GetGeoTransform()
-    max_lon = min_lon + (ds.RasterXSize * xres)
-    min_lat = max_lat + (ds.RasterYSize * yres)
     
     map_.set_center((max_lon+min_lon)/2,(max_lat + min_lat)/2)
     
@@ -108,7 +108,7 @@ def exportLegend(filename):
         color_map.append([val/255 for val in list(pm.mspa_colors[index])])
 
     columns = ['entry']
-    rows = [' '*10 for index in pm.mspa_colors] #trick to see the first column
+    rows = [' '*10 for index in pm.mspa_colors] # trick to see the first column
     cell_text = [[index] for index in pm.mspa_colors]
 
     fig, ax = plt.subplots(1,1)

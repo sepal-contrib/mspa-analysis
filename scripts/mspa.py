@@ -108,7 +108,7 @@ def exportLegend(filename):
         color_map.append([val/255 for val in list(pm.mspa_colors[index])])
 
     columns = ['entry']
-    rows = [' '*10 for index in pm.mspa_colors] #trick to see the first column
+    rows = [' '*10 for index in pm.mspa_colors] # trick to see the first column
     cell_text = [[index] for index in pm.mspa_colors]
 
     fig, ax = plt.subplots(1,1)

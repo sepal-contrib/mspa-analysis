@@ -115,8 +115,8 @@ def mspa_analysis(bin_map, params, output):
         # copy the bin_map to input_dir and project it in a conform proj (ESRI:54009)
         # not currently working so I just ensure that we are in EPSG:4326
         bin_tmp_map = mspa_input_dir + 'input.tif'
+        #reproject(bin_map, bin_tmp_map, 'EPSG:4326', dst_nodata=0)
         shutil.copyfile(bin_map, bin_tmp_map)
-        #reproject(bin_map, bin_tmp_map, 'EPSG:4326')
     
         # create the parameter file     
         with open(mspa_input_dir + 'mspa-parameters.txt',"w+") as file:

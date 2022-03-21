@@ -1,3 +1,5 @@
+# ⚠️ This module is now included in the GWB SEPAL module ⚠️
+
 # MSPA analysis
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ## About 
